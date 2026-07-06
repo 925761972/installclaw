@@ -1,0 +1,26 @@
+node_modules/
+.next/
+.env*
+!.env.example
+data/*.db*
+npm-debug.log*
+*.tsbuildinfo
+
+# Local toolchains
+.tools/
+
+# Video channel helper (Go)
+tools/jingmu-channel-helper/bin/
+tools/jingmu-channel-helper/dist/
+tools/jingmu-channel-helper/downloads/
+tools/jingmu-channel-helper/logs/
+tools/jingmu-channel-helper/*.exe
+tools/jingmu-channel-helper/*.db
+tools/jingmu-channel-helper/*.db-wal
+tools/jingmu-channel-helper/*.db-shm
+tools/jingmu-channel-helper/state/
+
+# OS
+.DS_Store
+Thumbs.db
+desktop.ini

@@ -1,0 +1,37 @@
+.region-stage {
+  margin-inline: auto;
+}
+
+@media (max-width: 720px) {
+  .region-help {
+    align-items: flex-start;
+    gap: 10px;
+  }
+
+  .region-help small {
+    max-width: 190px;
+    line-height: 1.45;
+  }
+
+  .video-controls {
+    grid-template-columns: 28px 31px minmax(70px, 1fr) 31px;
+  }
+
+  .video-controls .clear-regions {
+    grid-column: 1 / -1;
+    width: 100%;
+  }
+
+  .region-chip {
+    grid-template-columns: 55px 1fr 28px;
+  }
+
+  .region-chip span:last-of-type {
+    display: none;
+  }
+
+  .draw-hint {
+    width: max-content;
+    max-width: 85%;
+  }
+}

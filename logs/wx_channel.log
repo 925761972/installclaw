@@ -1,0 +1,39 @@
+2026-07-06 16:26:05 INF 加载配置 成功 path=config.yaml status="成功" type="配置加载"
+2026-07-06 16:26:05 INF 负载均衡策略: 最少连接 (Least Connection)
+2026-07-06 16:26:05 INF 日志已初始化: logs/wx_channel.log (最大 5MB)
+2026-07-06 16:26:06 INF ✓ 证书已存在，无需重新安装。
+2026-07-06 16:26:06 INF 服务已启动 port=2025 proxy_mode="进程代理" type="系统启动"
+2026-07-06 16:26:06 INF ✓ WebSocket Hub 已启动
+2026-07-06 16:26:06 INF 云端管理功能已禁用 (cloud_enabled: false)
+2026-07-06 16:26:06 INF 🔍 请打开需要下载的视频号页面进行下载
+2026-07-06 16:26:06 INF 雷达服务未启用 (radar_enabled: false)
+2026-07-06 16:26:06 INF 💡 服务正在运行，按 Ctrl+C 退出...
+2026-07-06 16:26:06 INF ✓ Prometheus 监控已启动: http://localhost:9090/metrics
+2026-07-06 16:26:06 INF 🔌 WebSocket服务已启动，端口: 2026
+2026-07-06 16:26:07 WRN ⚠️ 注入引擎启动失败：可能需要 [管理员权限] 才能在视频号内显示按钮
+2026-07-06 16:26:07 INF 正在检查更新...
+2026-07-06 16:26:08 INF [WebSocket] Client connected: 20260706162608.091063 (total: 1)
+2026-07-06 16:26:08 INF ✓ 证书与网络链路正常
+2026-07-06 16:26:08 INF API 请求: OPTIONS /api/stats [204] 0s from 
+2026-07-06 16:26:08 WRN 检查更新失败: failed to detect latest version: GET https://api.github.com/repos/nobiyou/wx_channel/releases: 403 API rate limit exceeded for 212.74.6.72. (But here's the good news: Authenticated requests get a higher rate limit. Check out the documentation for more details.) [rate reset in 6m28s]
+2026-07-06 16:26:10 INF API 请求: OPTIONS /api/stats [204] 0s from 
+2026-07-06 16:26:15 INF API 请求: OPTIONS /api/stats [204] 0s from 
+2026-07-06 16:26:20 INF API 请求: OPTIONS /api/stats [204] 0s from 
+2026-07-06 16:26:25 INF API 请求: OPTIONS /api/stats [204] 0s from 
+2026-07-06 16:26:30 INF API 请求: OPTIONS /api/stats [204] 0s from 
+2026-07-06 16:26:35 INF API 请求: OPTIONS /api/stats [204] 0s from 
+2026-07-06 16:26:40 INF API 请求: OPTIONS /api/stats [204] 0s from 
+2026-07-06 16:26:45 INF API 请求: OPTIONS /api/stats [204] 0s from 
+2026-07-06 16:26:50 INF API 请求: OPTIONS /api/stats [204] 0s from 
+2026-07-06 16:26:55 INF API 请求: OPTIONS /api/stats [204] 0s from 
+2026-07-06 16:27:00 INF API 请求: OPTIONS /api/stats [204] 0s from 
+2026-07-06 16:27:05 INF API 请求: OPTIONS /api/stats [204] 0s from 
+2026-07-06 16:27:06 INF [WebSocket] Client 20260706162608.091063 closed: failed to get reader: received close frame: status = StatusGoingAway and reason = ""
+2026-07-06 16:27:06 INF [WebSocket] Client disconnected: 20260706162608.091063 (total: 0)
+2026-07-06 16:27:06 INF API 请求: GET /api/health [200] 0s from 
+2026-07-06 16:27:06 INF [WebSocket] Client connected: 20260706162706.416387 (total: 1)
+2026-07-06 16:27:08 WRN 无法读取 web/console.html: open web/console.html: The system cannot find the path specified.
+2026-07-06 16:27:08 INF [WebSocket] Client 20260706162706.416387 closed: failed to get reader: received close frame: status = StatusGoingAway and reason = ""
+2026-07-06 16:27:08 INF [WebSocket] Client disconnected: 20260706162706.416387 (total: 0)
+2026-07-06 16:27:11 WRN 无法读取 web/console.html: open web/console.html: The system cannot find the path specified.
+2026-07-06 16:27:13 WRN 无法读取 web/console.html: open web/console.html: The system cannot find the path specified.
