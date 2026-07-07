@@ -61,7 +61,8 @@ export function createUser(email: string, password: string) {
   const id = randomUUID();
   const { hash, salt } = hashPassword(password);
   const now = Date.now();
-  db.prepare("INSERT INTO users (id, email, password_hash, password_salt, created_at) VALUES (?, ?, ?, ?, ?)")
-    .run(id, email.toLowerCase(), hash, salt, now);
+  const welcomePoints = 500;
+  db.prepare("INSERT INTO users (id, email, password_hash, password_salt, points_balance, created_at) VALUES (?, ?, ?, ?, ?, ?)")
+    .run(id, email.toLowerCase(), hash, salt, welcomePoints, now);
   return id;
 }
