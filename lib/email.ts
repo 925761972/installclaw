@@ -49,7 +49,7 @@ export async function sendVerificationCode(email: string): Promise<{ ok: boolean
   }
 
   try {
-    const fromEmail = process.env.RESEND_FROM_EMAIL || "verify@installclaw.cn";
+    const fromEmail = process.env.RESEND_FROM_EMAIL || "noreply@mail.installclaw.cn";
     await resend.emails.send({
       from: `净幕 <${fromEmail}>`,
       to: normalizedEmail,
