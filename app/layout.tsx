@@ -3,8 +3,8 @@ import "./globals.css";
 import "./region-responsive.css";
 
 export const metadata: Metadata = {
-  title: "净幕｜AI 字幕擦除",
-  description: "标准版与精细化 AI 视频字幕擦除，按实际时长计费。"
+  title: "净幕｜视频号助手 - 微信视频号批量下载工具",
+  description: "净幕视频号助手，一键下载微信视频号视频，支持批量下载、加密视频自动解密、智能去重。"
 };
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
