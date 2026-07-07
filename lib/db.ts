@@ -136,17 +136,9 @@ db.exec(`
   CREATE INDEX IF NOT EXISTS idx_helper_tokens_user ON helper_access_tokens(user_id);
   CREATE INDEX IF NOT EXISTS idx_helper_tokens_expiry ON helper_access_tokens(expires_at);
   CREATE INDEX IF NOT EXISTS idx_helper_events_user_created ON helper_download_events(user_id, created_at DESC);
-
-  CREATE TABLE IF NOT EXISTS email_verifications (
-    email TEXT PRIMARY KEY,
-    code TEXT NOT NULL,
-    expires_at INTEGER NOT NULL,
-    attempts INTEGER NOT NULL DEFAULT 0,
-    created_at INTEGER NOT NULL
-  );
 `);
 
-addColumnIfMissing(db, "users", "email_verified", "INTEGER NOT NULL DEFAULT 0");
+
 addColumnIfMissing(db, "orders", "provider", "TEXT");
 addColumnIfMissing(db, "orders", "payment_method", "TEXT");
 addColumnIfMissing(db, "orders", "provider_trade_no", "TEXT");
