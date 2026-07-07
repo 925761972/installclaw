@@ -12,7 +12,7 @@ export async function Header() {
         <nav className="main-nav" aria-label="主导航">
           <Link href="/#how">怎么用</Link>
           <Link href="/pricing">价格</Link>
-          <Link href="/#quality">效果说明</Link>
+          <Link href="/#features">功能说明</Link>
         </nav>
         <div className="nav-actions">
           {user ? (
