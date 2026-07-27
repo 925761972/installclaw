@@ -8,7 +8,7 @@ export async function Header() {
   return (
     <header className="site-header">
       <div className="nav-wrap">
-        <Logo showOperator />
+        <Logo />
         <nav className="main-nav" aria-label="主导航">
           <Link href="/#how">怎么用</Link>
           <Link href="/pricing">价格</Link>
