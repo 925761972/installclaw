@@ -1,4 +1,25 @@
+import nodemailer from "nodemailer";
 import { Resend } from "resend";
+
+let smtpTransporter: ReturnType<typeof nodemailer.createTransport> | null = null;
+
+function getSmtpTransporter() {
+  const user = process.env.SMTP_USER?.trim();
+  const password = process.env.SMTP_PASSWORD;
+  if (!user || !password) return null;
+
+  if (!smtpTransporter) {
+    const port = Number(process.env.SMTP_PORT || "465");
+    smtpTransporter = nodemailer.createTransport({
+      host: process.env.SMTP_HOST?.trim() || "smtpdm.aliyun.com",
+      port,
+      secure: port === 465,
+      auth: { user, pass: password },
+    });
+  }
+
+  return smtpTransporter;
+}
 
 function getResend(): Resend | null {
   const apiKey = process.env.RESEND_API_KEY;
@@ -6,15 +27,47 @@ function getResend(): Resend | null {
   return new Resend(apiKey);
 }
 
-export async function sendVerificationCode(email: string, code: string) {
-  const resend = getResend();
-  if (!resend) {
-    console.log(`[Email] Verification code for ${email}: ${code}`);
+function getFromAddress() {
+  const email =
+    process.env.SMTP_FROM_EMAIL?.trim() ||
+    process.env.SMTP_USER?.trim() ||
+    process.env.RESEND_FROM_EMAIL?.trim() ||
+    "noreply@zaolang.ltd";
+  return `净幕 <${email}>`;
+}
+
+async function sendEmail({
+  to,
+  subject,
+  html,
+}: {
+  to: string;
+  subject: string;
+  html: string;
+}) {
+  const smtp = getSmtpTransporter();
+  if (smtp) {
+    await smtp.sendMail({ from: getFromAddress(), to, subject, html });
     return;
   }
 
-  await resend.emails.send({
-    from: process.env.RESEND_FROM_EMAIL || "noreply@zaolang.ltd",
+  const resend = getResend();
+  if (resend) {
+    const { error } = await resend.emails.send({
+      from: getFromAddress(),
+      to,
+      subject,
+      html,
+    });
+    if (error) throw new Error(`Resend send failed: ${error.message}`);
+    return;
+  }
+
+  throw new Error("Email service is not configured");
+}
+
+export async function sendVerificationCode(email: string, code: string) {
+  await sendEmail({
     to: email,
     subject: "净幕 - 邮箱验证码",
     html: `
@@ -32,19 +85,12 @@ export async function sendVerificationCode(email: string, code: string) {
           <p style="color:#9ca3af;font-size:13px;margin:0">验证码 5 分钟内有效。如非本人操作，请忽略此邮件。</p>
         </div>
       </div>
-    `
+    `,
   });
 }
 
 export async function sendPasswordResetEmail(email: string, resetUrl: string) {
-  const resend = getResend();
-  if (!resend) {
-    console.log(`[Email] Password reset link for ${email}: ${resetUrl}`);
-    return;
-  }
-
-  await resend.emails.send({
-    from: process.env.RESEND_FROM_EMAIL || "noreply@zaolang.ltd",
+  await sendEmail({
     to: email,
     subject: "净幕 - 重置密码",
     html: `
@@ -61,6 +107,6 @@ export async function sendPasswordResetEmail(email: string, resetUrl: string) {
           <p style="color:#d1d5db;font-size:12px;margin:0;word-break:break-all">如按钮无法点击，请复制以下链接到浏览器：<br />${resetUrl}</p>
         </div>
       </div>
-    `
+    `,
   });
 }
