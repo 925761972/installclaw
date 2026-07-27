@@ -133,9 +133,44 @@ db.exec(`
     created_at INTEGER NOT NULL
   );
 
+  CREATE TABLE IF NOT EXISTS invitations (
+    id TEXT PRIMARY KEY,
+    inviter_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    invitee_id TEXT REFERENCES users(id) ON DELETE SET NULL,
+    invite_code TEXT NOT NULL UNIQUE,
+    reward_points INTEGER NOT NULL DEFAULT 100,
+    inviter_rewarded INTEGER NOT NULL DEFAULT 0,
+    invitee_rewarded INTEGER NOT NULL DEFAULT 0,
+    created_at INTEGER NOT NULL,
+    accepted_at INTEGER
+  );
+
+  CREATE INDEX IF NOT EXISTS idx_invitations_inviter ON invitations(inviter_id);
+  CREATE INDEX IF NOT EXISTS idx_invitations_invitee ON invitations(invitee_id);
+  CREATE INDEX IF NOT EXISTS idx_invitations_code ON invitations(invite_code);
   CREATE INDEX IF NOT EXISTS idx_helper_tokens_user ON helper_access_tokens(user_id);
   CREATE INDEX IF NOT EXISTS idx_helper_tokens_expiry ON helper_access_tokens(expires_at);
   CREATE INDEX IF NOT EXISTS idx_helper_events_user_created ON helper_download_events(user_id, created_at DESC);
+
+  CREATE TABLE IF NOT EXISTS password_reset_tokens (
+    token_hash TEXT PRIMARY KEY,
+    user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    expires_at INTEGER NOT NULL,
+    used_at INTEGER,
+    created_at INTEGER NOT NULL
+  );
+  CREATE INDEX IF NOT EXISTS idx_reset_tokens_user ON password_reset_tokens(user_id);
+  CREATE INDEX IF NOT EXISTS idx_reset_tokens_expiry ON password_reset_tokens(expires_at);
+
+  CREATE TABLE IF NOT EXISTS email_verification_codes (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    email TEXT NOT NULL,
+    code TEXT NOT NULL,
+    expires_at INTEGER NOT NULL,
+    used_at INTEGER,
+    created_at INTEGER NOT NULL
+  );
+  CREATE INDEX IF NOT EXISTS idx_verification_email ON email_verification_codes(email, created_at DESC);
 `);
 
 
@@ -146,5 +181,7 @@ addColumnIfMissing(db, "orders", "idempotency_key", "TEXT");
 addColumnIfMissing(db, "orders", "notify_payload", "TEXT");
 addColumnIfMissing(db, "orders", "fail_reason", "TEXT");
 addColumnIfMissing(db, "orders", "closed_at", "INTEGER");
+addColumnIfMissing(db, "users", "invite_code", "TEXT");
+addColumnIfMissing(db, "users", "invited_by", "TEXT");
 
 if (process.env.NODE_ENV !== "production") globalForDb.subtitleDb = db;

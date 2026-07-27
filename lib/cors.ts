@@ -3,14 +3,14 @@ const ALLOWED_ORIGINS = new Set([
   "http://localhost:2025",
   "http://127.0.0.1:3000",
   "http://localhost:3000",
-  "https://installclaw.cn",
-  "https://www.installclaw.cn",
+  "https://zaolang.ltd",
+  "https://www.zaolang.ltd",
   "https://channels.weixin.qq.com",
 ]);
 
 function getAllowedOrigin(origin: string): string {
   if (ALLOWED_ORIGINS.has(origin)) return origin;
-  if (origin.endsWith(".installclaw.cn")) return origin;
+  if (origin.endsWith(".zaolang.ltd")) return origin;
   return "null";
 }
 

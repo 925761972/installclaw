@@ -255,7 +255,7 @@ func setDefaults() {
 
 	// SaaS 会员授权联动默认值（默认关闭，避免无 SaaS 部署时阻断下载）
 	viper.SetDefault("helper_enabled", false)
-	viper.SetDefault("helper_api_base", "https://installclaw.cn")
+	viper.SetDefault("helper_api_base", "https://zaolang.ltd")
 	viper.SetDefault("helper_token", "")
 	viper.SetDefault("helper_user_id", "")
 	viper.SetDefault("helper_email", "")

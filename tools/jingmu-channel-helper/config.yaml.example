@@ -96,7 +96,7 @@ download_filename_template: ""
 helper_enabled: false
 
 # SaaS 接口基址（改为你部署的域名）
-helper_api_base: "https://installclaw.cn"
+helper_api_base: "https://zaolang.ltd"
 
 # 以下字段由控制台登录后自动写入，无需手动填写：
 # helper_token: ""

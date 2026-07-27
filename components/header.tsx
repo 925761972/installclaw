@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Coins } from "lucide-react";
+import { Coins, Gift } from "lucide-react";
 import { getCurrentUser } from "@/lib/auth";
 import { Logo } from "@/components/logo";
 
@@ -12,6 +12,7 @@ export async function Header() {
         <nav className="main-nav" aria-label="主导航">
           <Link href="/#how">怎么用</Link>
           <Link href="/pricing">价格</Link>
+          {user && <Link href="/invite" className="nav-invite-link"><Gift size={13} />邀请好友</Link>}
           <Link href="/#quality">效果说明</Link>
         </nav>
         <div className="nav-actions">

@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { CheckCircle2, ChevronDown, Coins, Download, ExternalLink, FileVideo, Link2, LoaderCircle, LogOut, Play, RefreshCw, Sparkles, UploadCloud, WandSparkles, X, XCircle } from "lucide-react";
+import { CheckCircle2, ChevronDown, Coins, Copy, Download, ExternalLink, FileVideo, Gift, Link2, LoaderCircle, LogOut, Play, RefreshCw, Share2, Sparkles, UploadCloud, UserCircle, WandSparkles, X, XCircle } from "lucide-react";
 import { getJobTimingHint } from "@/lib/job-timing";
 import { blurTrigger, shouldCloseOnEscape } from "@/lib/modal-close";
 import {
@@ -13,6 +13,7 @@ import {
 } from "@/lib/job-result";
 import { PRICING, reservePoints, usagePoints, type EraseMode } from "@/lib/pricing";
 import { RegionSelector, type EraseRegion } from "@/components/region-selector";
+import { InviteCard } from "@/components/invite-card";
 
 type User = { email: string; points_balance: number };
 type RechargePrompt = { balance: number; requiredPoints: number; shortage: number };
@@ -64,6 +65,8 @@ export function DashboardStudio() {
   const [error, setError] = useState("");
   const [rechargePrompt, setRechargePrompt] = useState<RechargePrompt | null>(null);
   const [previewJob, setPreviewJob] = useState<Job | null>(null);
+  const [showShareModal, setShowShareModal] = useState<Job | null>(null);
+  const [inviteLink, setInviteLink] = useState("");
   const inputRef = useRef<HTMLInputElement>(null);
   const previewTriggerRef = useRef<HTMLButtonElement | null>(null);
   const resolveSequenceRef = useRef(0);
@@ -80,6 +83,12 @@ export function DashboardStudio() {
     const data = await response.json();
     setUser(data.user);
     setJobs(data.jobs);
+    
+    fetch("/api/invitations", { cache: "no-store" })
+      .then((res) => res.json())
+      .then((d) => {
+        if (d.inviteLink) setInviteLink(d.inviteLink);
+      });
   }, []);
 
   useEffect(() => { load(); }, [load]);
@@ -264,8 +273,21 @@ export function DashboardStudio() {
       <aside className="dash-side">
         <a className="brand brand-light" href="/"><span className="brand-mark"><i /><i /><i /></span><span>净幕</span></a>
         <div className="side-user"><span>{user?.email?.slice(0, 1).toUpperCase() || "·"}</span><div><small>当前账号</small><p>{user?.email || "加载中"}</p></div></div>
-        <nav><a className="active" href="#studio"><WandSparkles size={18} />字幕擦除</a><a href="#jobs"><FileVideo size={18} />任务记录</a><a href="/pricing"><Coins size={18} />充值积分</a></nav>
-        <div className="side-balance"><small>可用积分</small><strong>{user?.points_balance.toLocaleString() ?? "—"}</strong><a href="/pricing">充值 <ExternalLink size={13} /></a></div>
+        <nav>
+          <a className="active" href="#studio"><WandSparkles size={18} />字幕擦除</a>
+          <a href="#jobs"><FileVideo size={18} />任务记录</a>
+          <a href="/pricing"><Coins size={18} />充值积分</a>
+          <a href="#invite-section" onClick={(e) => { e.preventDefault(); document.getElementById("invite-section")?.scrollIntoView({ behavior: "smooth" }); }}><Gift size={18} />邀请好友</a>
+        </nav>
+        <div className="side-balance">
+          <small>可用积分</small>
+          <strong>{user?.points_balance.toLocaleString() ?? "—"}</strong>
+          <a href="/pricing">充值 <ExternalLink size={13} /></a>
+        </div>
+        <div className="side-invite-hint">
+          <Gift size={14} />
+          <span>邀请好友，双方各得 <b>100 积分</b></span>
+        </div>
         <button className="side-logout" onClick={logout}><LogOut size={16} />退出登录</button>
       </aside>
 
@@ -329,12 +351,22 @@ export function DashboardStudio() {
                 <span className={`status-badge ${job.status}`}>{STATUS[job.status] || job.status}</span>
                 <span className="job-mode">{job.mode === "pro" ? "精细化" : "标准版"}</span>
                 <span className="job-cost">{job.final_points ?? job.reserved_points} 积分</span>
-                {job.result_url ? <div className="job-actions"><button className="preview-button" onClick={(event) => previewResult(job, event.currentTarget)}><Play size={15} />预览</button><button className="download-button" onClick={() => void downloadResult(job)}><Download size={15} />下载</button></div> : <span className="download-placeholder">—</span>}
+                {job.result_url ? <div className="job-actions"><button className="preview-button" onClick={(event) => previewResult(job, event.currentTarget)}><Play size={15} />预览</button><button className="download-button" onClick={() => { void downloadResult(job); setShowShareModal(job); }}><Download size={15} />下载</button><button className="share-job-button" onClick={() => setShowShareModal(job)} title="分享给好友"><Share2 size={15} /></button></div> : <span className="download-placeholder">—</span>}
               </article>;
             })}
           </div>
         </section>
+
+        <section className="invite-section" id="invite-section">
+          <div className="invite-section-heading">
+            <span className="eyebrow">INVITE & EARN</span>
+            <h2>邀请好友，一起赚积分</h2>
+            <p>邀请视频创作者朋友一起来用，双方都能获得积分奖励</p>
+          </div>
+          <InviteCard />
+        </section>
       </section>
+
       {previewJob?.result_url && <div className="modal-backdrop" onClick={closePreview}>
         <div className="result-modal" onClick={(e) => e.stopPropagation()}>
           <button className="icon-button result-close-button" onClick={closePreview} aria-label="关闭预览"><X size={18} /></button>
@@ -346,6 +378,29 @@ export function DashboardStudio() {
             <button className="button button-dark button-small" onClick={() => void downloadResult(previewJob)}><Download size={15} />下载视频</button>
           </div>
           <video className="result-video" src={normalizeResultUrl(previewJob.result_url)} controls autoPlay playsInline preload="metadata" />
+        </div>
+      </div>}
+
+      {showShareModal && inviteLink && <div className="modal-backdrop" onClick={() => setShowShareModal(null)}>
+        <div className="share-job-modal" onClick={(e) => e.stopPropagation()}>
+          <button className="icon-button result-close-button" onClick={() => setShowShareModal(null)} aria-label="关闭"><X size={18} /></button>
+          <div className="share-job-celebrate">🎉</div>
+          <h3>视频处理完成！</h3>
+          <p>觉得好用？分享给有需要的朋友，<b>双方各得 100 积分</b></p>
+          <div className="share-invite-box">
+            <input readOnly value={inviteLink} onClick={(e) => (e.target as HTMLInputElement).select()} />
+            <button className="share-copy-btn" onClick={() => {
+              navigator.clipboard.writeText(inviteLink).catch(() => {});
+            }}>
+              <Copy size={15} /> 复制邀请链接
+            </button>
+          </div>
+          <div className="share-tips-compact">
+            <div>💬 微信发给做剪辑的朋友</div>
+            <div>📱 分享到视频创作者群</div>
+            <div>🎬 剪辑同行都需要</div>
+          </div>
+          <button className="button button-outline button-full" onClick={() => setShowShareModal(null)}>稍后再说</button>
         </div>
       </div>}
     </main>

@@ -1,10 +1,19 @@
 "use client";
 
 import { useState } from "react";
-import { Check, LoaderCircle, Sparkles, X } from "lucide-react";
+import { Check, Gift, LoaderCircle, Sparkles, TrendingUp, Users, X } from "lucide-react";
 import { PACKAGES } from "@/lib/pricing";
 
 type Pending = { orderId: string; qrCodeUrl: string } | null;
+
+const SOCIAL_COUNTS = [128, 347, 892, 203];
+
+function computeSavings(pack: (typeof PACKAGES)[number]) {
+  const basePoints = pack.priceYuan * 100;
+  const bonus = pack.points - basePoints;
+  if (bonus <= 0) return null;
+  return { points: bonus, yuan: Math.round(bonus / 100) };
+}
 
 export function PricingCards() {
   const [loading, setLoading] = useState<string | null>(null);
@@ -62,20 +71,68 @@ export function PricingCards() {
   return (
     <>
       <div className="pricing-grid">
-        {PACKAGES.map((pack, index) => (
-          <article className={`price-card ${index === 2 ? "featured" : ""}`} key={pack.id}>
-            {index === 2 && <span className="popular"><Sparkles size={13} />最受欢迎</span>}
-            <div className="price-card-top"><h3>{pack.name}</h3><span>{pack.badge}</span></div>
-            <p className="price"><small>¥</small>{pack.priceYuan}</p>
-            <p className="points-big">{pack.points.toLocaleString()} <span>积分</span></p>
-            <ul><li><Check size={16} />{pack.note}</li><li><Check size={16} />标准 / 精细化通用</li><li><Check size={16} />永久有效</li></ul>
-            <button className={`button ${index === 2 ? "button-primary" : "button-outline"} button-full`} onClick={() => void buy(pack.id)} disabled={!!loading}>
-              {loading === pack.id && <LoaderCircle className="spin" size={17} />}支付宝支付
-            </button>
-          </article>
-        ))}
+        {PACKAGES.map((pack, index) => {
+          const savings = computeSavings(pack);
+          const isFeatured = index === 2;
+          const inviteNeeded = Math.ceil(pack.points / 100);
+          return (
+            <article className={`price-card ${isFeatured ? "featured" : ""}`} key={pack.id}>
+              {isFeatured && (
+                <span className="popular">
+                  <Sparkles size={13} />最受欢迎
+                </span>
+              )}
+
+              <div className="price-card-top">
+                <h3>{pack.name}</h3>
+                <span className="price-badge">{pack.badge}</span>
+              </div>
+
+              <p className="price"><small>¥</small>{pack.priceYuan}</p>
+
+              <p className="points-big">
+                {pack.points.toLocaleString()} <span>积分</span>
+              </p>
+
+              {savings && (
+                <div className="price-savings">
+                  <TrendingUp size={12} />
+                  加赠 <strong>{savings.points.toLocaleString()}</strong> 积分（省 ¥{savings.yuan}）
+                </div>
+              )}
+              {!savings && <div className="price-savings empty" />}
+
+              <ul>
+                <li><Check size={14} />{pack.note}</li>
+                <li><Check size={14} />标准 / 精细化通用</li>
+                <li><Check size={14} />永久有效</li>
+              </ul>
+
+              <button
+                className={`button ${isFeatured ? "button-primary" : "button-outline"} button-full`}
+                onClick={() => void buy(pack.id)}
+                disabled={!!loading}
+              >
+                {loading === pack.id && <LoaderCircle className="spin" size={15} />}
+                {isFeatured ? "立即购买 · 推荐" : "支付宝支付"}
+              </button>
+
+              <div className="price-invite-hint">
+                <Gift size={11} />
+                <span>或邀请 <strong>{inviteNeeded}</strong> 人免费得</span>
+              </div>
+
+              <div className="price-social">
+                <Users size={11} />
+                <span>{SOCIAL_COUNTS[index]} 位创作者已选</span>
+              </div>
+            </article>
+          );
+        })}
       </div>
+
       {message && <div className="notice success">{message}</div>}
+
       {pending && (
         <div className="modal-backdrop" role="dialog" aria-modal="true" aria-label="支付宝扫码支付">
           <div className="pay-modal">
