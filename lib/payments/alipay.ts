@@ -20,6 +20,17 @@ function formatAmount(amountCents: number): string {
   return (amountCents / 100).toFixed(2);
 }
 
+function normalizePemKey(value: string, type: "PRIVATE KEY" | "PUBLIC KEY"): string {
+  const normalized = value.trim().replace(/\\n/g, "\n");
+  if (normalized.includes("-----BEGIN")) {
+    return normalized;
+  }
+
+  const body = normalized.replace(/\s+/g, "");
+  const lines = body.match(/.{1,64}/g)?.join("\n") ?? body;
+  return `-----BEGIN ${type}-----\n${lines}\n-----END ${type}-----`;
+}
+
 function sortAndJoin(params: Record<string, string>): string {
   return Object.keys(params)
     .filter((key) => key !== "sign" && key !== "sign_type" && params[key] !== "")
@@ -32,14 +43,14 @@ function signParams(content: string, privateKey: string): string {
   const signer = crypto.createSign("RSA-SHA256");
   signer.update(content, "utf8");
   signer.end();
-  return signer.sign(privateKey, "base64");
+  return signer.sign(normalizePemKey(privateKey, "PRIVATE KEY"), "base64");
 }
 
 function verifyParams(content: string, signature: string, publicKey: string): boolean {
   const verifier = crypto.createVerify("RSA-SHA256");
   verifier.update(content, "utf8");
   verifier.end();
-  return verifier.verify(publicKey, signature, "base64");
+  return verifier.verify(normalizePemKey(publicKey, "PUBLIC KEY"), signature, "base64");
 }
 
 function escapeHtmlAttribute(value: string): string {
@@ -118,14 +129,33 @@ export function createAlipayProvider(): PaymentProviderDriver {
         throw new Error("支付宝回调验签失败");
       }
 
+      if (params.app_id !== getRequiredEnv("ALIPAY_APP_ID")) {
+        throw new Error("支付宝回调 APPID 不匹配");
+      }
+
+      const sellerId = process.env.ALIPAY_SELLER_ID?.trim();
+      if (sellerId && params.seller_id !== sellerId) {
+        throw new Error("支付宝回调收款账号不匹配");
+      }
+
       if (params.trade_status !== "TRADE_SUCCESS" && params.trade_status !== "TRADE_FINISHED") {
         throw new Error("支付宝交易未成功");
+      }
+
+      const amountCents = Math.round(Number(params.total_amount) * 100);
+      if (
+        !params.out_trade_no ||
+        !params.trade_no ||
+        !Number.isSafeInteger(amountCents) ||
+        amountCents <= 0
+      ) {
+        throw new Error("支付宝回调订单字段无效");
       }
 
       return {
         orderId: params.out_trade_no,
         providerTradeNo: params.trade_no,
-        amountCents: Math.round(Number(params.total_amount || "0") * 100),
+        amountCents,
         rawPayload: JSON.stringify(params),
         paidAt: parsePaidAt(params.notify_time),
       };
