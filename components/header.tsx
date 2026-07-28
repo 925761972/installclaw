@@ -10,6 +10,7 @@ export async function Header() {
       <div className="nav-wrap">
         <Logo />
         <nav className="main-nav" aria-label="主导航">
+          <Link href="/dashboard" className="nav-task-link"><span aria-hidden="true" />字幕擦除</Link>
           <Link href="/#how">怎么用</Link>
           <Link href="/pricing">价格</Link>
           {user && <Link href="/invite" className="nav-invite-link"><Gift size={13} />邀请好友</Link>}
