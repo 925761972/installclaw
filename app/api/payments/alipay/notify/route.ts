@@ -5,7 +5,11 @@ export async function POST(request: Request) {
   try {
     await handleAlipayNotify(request);
     return new NextResponse("success");
-  } catch {
+  } catch (error) {
+    console.error(
+      "[alipay-notify] processing failed:",
+      error instanceof Error ? error.message : "unknown error"
+    );
     return new NextResponse("failure", { status: 400 });
   }
 }
