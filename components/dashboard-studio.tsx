@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { CheckCircle2, ChevronDown, Coins, Copy, Download, ExternalLink, FileVideo, Gift, Link2, LoaderCircle, LogOut, Play, RefreshCw, Share2, Sparkles, UploadCloud, UserCircle, WandSparkles, X, XCircle } from "lucide-react";
+import { CheckCircle2, ChevronDown, Coins, Copy, Download, ExternalLink, FileVideo, Gift, Link2, LoaderCircle, LogOut, Play, Receipt, RefreshCw, Share2, Sparkles, UploadCloud, UserCircle, WandSparkles, X, XCircle } from "lucide-react";
 import { getJobTimingHint } from "@/lib/job-timing";
 import { blurTrigger, shouldCloseOnEscape } from "@/lib/modal-close";
 import {
@@ -277,6 +277,7 @@ export function DashboardStudio() {
           <a className="active" href="#studio"><WandSparkles size={18} />字幕擦除</a>
           <a href="#jobs"><FileVideo size={18} />任务记录</a>
           <a href="/pricing"><Coins size={18} />充值积分</a>
+          <a href="/account#recharge-orders"><Receipt size={18} />充值记录</a>
           <a href="#invite-section" onClick={(e) => { e.preventDefault(); document.getElementById("invite-section")?.scrollIntoView({ behavior: "smooth" }); }}><Gift size={18} />邀请好友</a>
         </nav>
         <div className="side-balance">

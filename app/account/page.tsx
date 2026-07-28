@@ -1,12 +1,37 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useState } from "react";
-import { Coins, ExternalLink, LogOut, Receipt, UserCircle, WandSparkles } from "lucide-react";
+import { useCallback, useEffect, useMemo, useState } from "react";
+import {
+  CircleCheckBig,
+  CircleX,
+  Clock3,
+  Coins,
+  ExternalLink,
+  LogOut,
+  Receipt,
+  RefreshCw,
+  UserCircle,
+  WandSparkles
+} from "lucide-react";
+import { PACKAGES } from "@/lib/pricing";
 
 type User = { email: string; points_balance: number; created_at: number };
 type Transaction = { id: string; type: string; points: number; amount_cents: number | null; note: string; created_at: number };
-type Order = { id: string; package_id: string; amount_cents: number; points: number; status: string; created_at: number; paid_at: number | null };
+type Order = {
+  id: string;
+  package_id: string;
+  amount_cents: number;
+  points: number;
+  provider: string | null;
+  payment_method: string | null;
+  status: string;
+  provider_trade_no: string | null;
+  created_at: number;
+  paid_at: number | null;
+  closed_at: number | null;
+};
+type OrderFilter = "all" | "open" | "paid" | "failed";
 
 function formatDate(ts: number) {
   return new Date(ts).toLocaleString("zh-CN", {
@@ -32,36 +57,84 @@ const TRANSACTION_TYPE_LABEL: Record<string, string> = {
 
 const ORDER_STATUS_LABEL: Record<string, string> = {
   pending: "待支付",
-  paid: "已支付",
+  paying: "支付处理中",
+  paid: "已到账",
   closed: "已关闭",
   failed: "支付失败"
 };
+
+const PACKAGE_NAME = Object.fromEntries(PACKAGES.map((item) => [item.id, item.name]));
+
+function orderStatusIcon(status: string) {
+  if (status === "paid") return <CircleCheckBig size={16} />;
+  if (status === "failed" || status === "closed") return <CircleX size={16} />;
+  return <Clock3 size={16} />;
+}
 
 export default function AccountPage() {
   const [user, setUser] = useState<User | null>(null);
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
+  const [orderFilter, setOrderFilter] = useState<OrderFilter>("all");
+  const [recordError, setRecordError] = useState("");
+
+  const load = useCallback(async (background = false) => {
+    if (background) setRefreshing(true);
+    setRecordError("");
+    try {
+      const [meRes, txRes] = await Promise.all([
+        fetch("/api/me", { cache: "no-store" }),
+        fetch("/api/me/transactions", { cache: "no-store" })
+      ]);
+      if (meRes.status === 401) { window.location.href = "/login"; return; }
+      if (!meRes.ok || !txRes.ok) throw new Error("账户记录加载失败");
+      const meData = await meRes.json();
+      const txData = await txRes.json();
+      setUser(meData.user);
+      setTransactions(txData.transactions ?? []);
+      setOrders(txData.orders ?? []);
+    } catch {
+      setRecordError("充值记录暂时加载失败，请稍后刷新");
+    } finally {
+      setLoading(false);
+      setRefreshing(false);
+    }
+  }, []);
 
   useEffect(() => {
-    async function load() {
-      try {
-        const [meRes, txRes] = await Promise.all([
-          fetch("/api/me", { cache: "no-store" }),
-          fetch("/api/me/transactions", { cache: "no-store" })
-        ]);
-        if (meRes.status === 401) { window.location.href = "/login"; return; }
-        const meData = await meRes.json();
-        const txData = await txRes.json();
-        setUser(meData.user);
-        setTransactions(txData.transactions);
-        setOrders(txData.orders);
-      } finally {
-        setLoading(false);
-      }
-    }
-    load();
-  }, []);
+    void load();
+  }, [load]);
+
+  const hasOpenOrder = orders.some((order) => order.status === "pending" || order.status === "paying");
+
+  useEffect(() => {
+    if (!hasOpenOrder) return;
+    const timer = window.setInterval(() => void load(true), 15_000);
+    return () => window.clearInterval(timer);
+  }, [hasOpenOrder, load]);
+
+  useEffect(() => {
+    if (loading || window.location.hash !== "#recharge-orders") return;
+    window.requestAnimationFrame(() => {
+      document.getElementById("recharge-orders")?.scrollIntoView({ behavior: "smooth", block: "start" });
+    });
+  }, [loading]);
+
+  const orderCounts = useMemo(() => ({
+    all: orders.length,
+    open: orders.filter((order) => order.status === "pending" || order.status === "paying").length,
+    paid: orders.filter((order) => order.status === "paid").length,
+    failed: orders.filter((order) => order.status === "failed" || order.status === "closed").length
+  }), [orders]);
+
+  const filteredOrders = useMemo(() => orders.filter((order) => {
+    if (orderFilter === "open") return order.status === "pending" || order.status === "paying";
+    if (orderFilter === "paid") return order.status === "paid";
+    if (orderFilter === "failed") return order.status === "failed" || order.status === "closed";
+    return true;
+  }), [orderFilter, orders]);
 
   async function logout() {
     await fetch("/api/auth/logout", { method: "POST" });
@@ -81,7 +154,8 @@ export default function AccountPage() {
           <Link href="/dashboard"><WandSparkles size={18} />字幕擦除</Link>
           <Link href="/dashboard#jobs"><Receipt size={18} />任务记录</Link>
           <Link href="/pricing"><Coins size={18} />充值积分</Link>
-          <Link href="/account" className="active"><UserCircle size={18} />账户中心</Link>
+          <Link href="/account#recharge-orders" className="active"><Receipt size={18} />充值记录</Link>
+          <Link href="/account"><UserCircle size={18} />账户中心</Link>
         </nav>
         <div className="side-balance"><small>可用积分</small><strong>{user?.points_balance.toLocaleString() ?? "—"}</strong><Link href="/pricing">充值 <ExternalLink size={13} /></Link></div>
         <button className="side-logout" onClick={logout}><LogOut size={16} />退出登录</button>
@@ -136,31 +210,63 @@ export default function AccountPage() {
             )}
           </div>
 
-          <div className="studio-card" style={{marginTop: "20px"}}>
-            <div className="step-title"><span><Receipt size={16} /></span><div><h2>充值订单记录</h2><p style={{margin:0, fontSize:"11px", color:"var(--muted)"}}>最近20条订单</p></div></div>
+          <div className="studio-card recharge-records-card" id="recharge-orders" style={{marginTop: "20px"}}>
+            <div className="recharge-records-heading">
+              <div className="step-title"><span><Receipt size={16} /></span><div><h2>充值记录</h2><p>查看订单号、支付状态和到账情况</p></div></div>
+              <button className="icon-text-button" type="button" disabled={refreshing} onClick={() => void load(true)}>
+                <RefreshCw size={14} className={refreshing ? "spin" : ""} />{refreshing ? "刷新中" : "刷新记录"}
+              </button>
+            </div>
+
+            <div className="recharge-summary">
+              <button className={orderFilter === "all" ? "active" : ""} onClick={() => setOrderFilter("all")}>
+                <Receipt size={17} /><span>全部订单<strong>{orderCounts.all}</strong></span>
+              </button>
+              <button className={orderFilter === "open" ? "active" : ""} onClick={() => setOrderFilter("open")}>
+                <Clock3 size={17} /><span>待支付/处理中<strong>{orderCounts.open}</strong></span>
+              </button>
+              <button className={orderFilter === "paid" ? "active" : ""} onClick={() => setOrderFilter("paid")}>
+                <CircleCheckBig size={17} /><span>已到账<strong>{orderCounts.paid}</strong></span>
+              </button>
+              <button className={orderFilter === "failed" ? "active" : ""} onClick={() => setOrderFilter("failed")}>
+                <CircleX size={17} /><span>失败/关闭<strong>{orderCounts.failed}</strong></span>
+              </button>
+            </div>
+
+            {hasOpenOrder ? (
+              <p className="recharge-auto-refresh"><i />存在未完成订单，本页每 15 秒自动刷新到账状态。</p>
+            ) : null}
+            {recordError ? <p className="recharge-load-error">{recordError}</p> : null}
+
             {orders.length === 0 ? (
               <div className="empty-jobs" style={{padding:"40px 20px", marginTop:"20px"}}><Receipt size={34} /><h3>暂无充值订单</h3><p>去充值页购买积分包吧<Link href="/pricing" style={{fontWeight:800, borderBottom:"1px solid"}}>立即充值 →</Link></p></div>
+            ) : filteredOrders.length === 0 ? (
+              <div className="empty-jobs" style={{padding:"40px 20px", marginTop:"20px"}}><Receipt size={34} /><h3>当前分类暂无订单</h3><p>可切换上方状态查看其他充值记录</p></div>
             ) : (
-              <div className="jobs-table" style={{marginTop:"16px"}}>
-                {orders.map((order) => (
-                  <div key={order.id} className="job-row">
-                    <div className={`job-status-icon ${order.status}`}>
-                      {order.status === "paid" ? "✓" : order.status === "closed" ? "×" : "…"}
+              <div className="recharge-table">
+                <div className="recharge-table-head">
+                  <span>订单信息</span><span>支付状态</span><span>充值内容</span><span>支付金额</span><span>完成时间</span>
+                </div>
+                {filteredOrders.map((order) => (
+                  <div key={order.id} className="recharge-row">
+                    <div className="recharge-order-identity">
+                      <div className={`recharge-status-icon ${order.status}`}>{orderStatusIcon(order.status)}</div>
+                      <div>
+                        <strong>{PACKAGE_NAME[order.package_id] ?? order.package_id}</strong>
+                        <span title={order.id}>网站订单号：{order.id}</span>
+                        <span title={order.provider_trade_no ?? ""}>支付宝交易号：{order.provider_trade_no ?? "—"}</span>
+                        <small>创建于 {formatDate(order.created_at)}</small>
+                      </div>
                     </div>
-                    <div className="job-name">
-                      <strong>订单 {order.id.slice(0, 8)}</strong>
-                      <span>{formatDate(order.created_at)}</span>
-                    </div>
-                    <span className={`status-badge ${order.status}`}>
+                    <span className={`recharge-status-badge ${order.status}`}>
                       {ORDER_STATUS_LABEL[order.status] || order.status}
                     </span>
-                    <span className="job-cost">{order.points.toLocaleString()} 积分</span>
-                    <span className="job-cost">¥{(order.amount_cents / 100).toFixed(2)}</span>
+                    <strong className="recharge-points">+{order.points.toLocaleString()} 积分</strong>
+                    <strong className="recharge-amount">¥{(order.amount_cents / 100).toFixed(2)}</strong>
+                    <span className="recharge-paid-at">{order.paid_at ? formatDate(order.paid_at) : "—"}</span>
                     {order.status === "pending" ? (
-                      <div className="job-actions">
-                        <Link href={`/pricing?order=${order.id}`} className="preview-button">继续支付</Link>
-                      </div>
-                    ) : <span className="download-placeholder">—</span>}
+                      <Link href="/pricing" className="recharge-again-link">重新选择套餐</Link>
+                    ) : null}
                   </div>
                 ))}
               </div>

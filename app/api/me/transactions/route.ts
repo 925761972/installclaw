@@ -14,10 +14,21 @@ export async function GET() {
   `).all(user.id);
 
   const orders = db.prepare(`
-    SELECT id, package_id, amount_cents, points, status, created_at, paid_at
+    SELECT
+      id,
+      package_id,
+      amount_cents,
+      points,
+      provider,
+      payment_method,
+      status,
+      provider_trade_no,
+      created_at,
+      paid_at,
+      closed_at
     FROM orders
     WHERE user_id = ?
-    ORDER BY created_at DESC LIMIT 20
+    ORDER BY created_at DESC LIMIT 50
   `).all(user.id);
 
   return NextResponse.json({ transactions, orders });
