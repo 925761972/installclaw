@@ -104,7 +104,10 @@ export function createAlipayProvider(): PaymentProviderDriver {
 
       params.sign = signParams(sortAndJoin(params), privateKey);
 
-      const html = Object.entries(params)
+      const { biz_content: bizContent, ...gatewayParams } = params;
+      const separator = gateway.includes("?") ? "&" : "?";
+      const actionUrl = `${gateway}${separator}${new URLSearchParams(gatewayParams).toString()}`;
+      const html = Object.entries({ biz_content: bizContent })
         .map(
           ([key, value]) =>
             `<input type="hidden" name="${escapeHtmlAttribute(key)}" value="${escapeHtmlAttribute(value)}" />`
@@ -113,7 +116,7 @@ export function createAlipayProvider(): PaymentProviderDriver {
 
       return {
         kind: "html_form",
-        html: `<form id="alipay-submit" method="POST" action="${escapeHtmlAttribute(gateway)}">${html}</form><script>document.getElementById('alipay-submit').submit();</script>`,
+        html: `<meta charset="utf-8" /><form id="alipay-submit" method="POST" accept-charset="UTF-8" action="${escapeHtmlAttribute(actionUrl)}">${html}</form><script>document.getElementById('alipay-submit').submit();</script>`,
       };
     },
 
