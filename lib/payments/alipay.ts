@@ -31,9 +31,17 @@ function normalizePemKey(value: string, type: "PRIVATE KEY" | "PUBLIC KEY"): str
   return `-----BEGIN ${type}-----\n${lines}\n-----END ${type}-----`;
 }
 
-function sortAndJoin(params: Record<string, string>): string {
+function sortAndJoin(
+  params: Record<string, string>,
+  excludeSignType = false
+): string {
   return Object.keys(params)
-    .filter((key) => key !== "sign" && key !== "sign_type" && params[key] !== "")
+    .filter(
+      (key) =>
+        key !== "sign" &&
+        (!excludeSignType || key !== "sign_type") &&
+        params[key] !== ""
+    )
     .sort()
     .map((key) => `${key}=${params[key]}`)
     .join("&");
@@ -128,7 +136,12 @@ export function createAlipayProvider(): PaymentProviderDriver {
       const signature = params.sign || "";
       const publicKey = getRequiredEnv("ALIPAY_PUBLIC_KEY");
 
-      if (!signature || !verifyParams(sortAndJoin(params), signature, publicKey)) {
+      const hasValidSignature =
+        signature &&
+        (verifyParams(sortAndJoin(params), signature, publicKey) ||
+          verifyParams(sortAndJoin(params, true), signature, publicKey));
+
+      if (!hasValidSignature) {
         throw new Error("支付宝回调验签失败");
       }
 
