@@ -208,3 +208,35 @@ button{color:inherit}
   .recharge-order-identity span{white-space:normal;word-break:break-all}
   .recharge-again-link{position:static;justify-self:end}
 }
+
+/* Dashboard readability: keep supporting copy legible without flattening hierarchy. */
+.dash-side .side-user small,
+.dash-side .side-balance small,
+.dash-side .side-logout,
+.secure-note,
+.mode-card strong small,
+.mode-tag,
+.terms-note{font-size:11px}
+.dash-side .side-user p,
+.dash-side nav a,
+.step-title p,
+.tab-switch button,
+.drop-zone span,
+.url-fields p,
+.mode-card p,
+.order-summary dl div,
+.settle-note,
+.job-row,
+.job-name span,
+.job-name small,
+.empty-jobs p{font-size:12px}
+.drop-zone span,
+.url-fields p,
+.mode-card p,
+.settle-note,
+.job-name span,
+.job-name small,
+.terms-note{line-height:1.6}
+.mode-card p{min-height:38px}
+.job-name strong{font-size:13px}
+.job-name{gap:4px}
