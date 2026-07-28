@@ -107,6 +107,7 @@ export function createAlipayProvider(): PaymentProviderDriver {
           product_code: "FAST_INSTANT_TRADE_PAY",
           total_amount: formatAmount(input.amountCents),
           subject: input.subject,
+          timeout_express: "30m",
         }),
       };
 

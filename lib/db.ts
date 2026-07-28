@@ -90,7 +90,8 @@ db.exec(`
     fail_reason TEXT,
     created_at INTEGER NOT NULL,
     paid_at INTEGER,
-    closed_at INTEGER
+    closed_at INTEGER,
+    expires_at INTEGER
   );
 
   CREATE INDEX IF NOT EXISTS idx_jobs_user_created ON jobs(user_id, created_at DESC);
@@ -181,6 +182,7 @@ addColumnIfMissing(db, "orders", "idempotency_key", "TEXT");
 addColumnIfMissing(db, "orders", "notify_payload", "TEXT");
 addColumnIfMissing(db, "orders", "fail_reason", "TEXT");
 addColumnIfMissing(db, "orders", "closed_at", "INTEGER");
+addColumnIfMissing(db, "orders", "expires_at", "INTEGER");
 addColumnIfMissing(db, "users", "invite_code", "TEXT");
 addColumnIfMissing(db, "users", "invited_by", "TEXT");
 

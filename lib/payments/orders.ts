@@ -19,7 +19,10 @@ type OrderRow = {
   created_at: number;
   paid_at: number | null;
   closed_at: number | null;
+  expires_at: number | null;
 };
+
+export const PAYMENT_ORDER_TTL_MS = 30 * 60_000;
 
 function ensureOrderColumns(db: Database.Database) {
   const columns = db.prepare("PRAGMA table_info(orders)").all() as Array<{ name: string }>;
@@ -31,7 +34,8 @@ function ensureOrderColumns(db: Database.Database) {
     ["idempotency_key", "TEXT"],
     ["notify_payload", "TEXT"],
     ["fail_reason", "TEXT"],
-    ["closed_at", "INTEGER"]
+    ["closed_at", "INTEGER"],
+    ["expires_at", "INTEGER"]
   ];
   const missingColumns = requiredColumns.filter(([name]) => !columnNames.has(name));
 
@@ -76,6 +80,31 @@ export function preparePaymentDb(db: Database.Database) {
   `);
 
   ensureOrderColumns(db);
+  db.prepare(
+    "UPDATE orders SET expires_at = created_at + ? WHERE expires_at IS NULL"
+  ).run(PAYMENT_ORDER_TTL_MS);
+}
+
+export function closeExpiredOrders(
+  db: Database.Database,
+  input: { userId?: string; now?: number } = {}
+) {
+  preparePaymentDb(db);
+  const now = input.now ?? Date.now();
+
+  if (input.userId) {
+    return db.prepare(
+      `UPDATE orders
+       SET status = 'closed', closed_at = ?, fail_reason = COALESCE(fail_reason, 'payment_expired')
+       WHERE user_id = ? AND status IN ('pending', 'paying') AND expires_at <= ?`
+    ).run(now, input.userId, now).changes;
+  }
+
+  return db.prepare(
+    `UPDATE orders
+     SET status = 'closed', closed_at = ?, fail_reason = COALESCE(fail_reason, 'payment_expired')
+     WHERE status IN ('pending', 'paying') AND expires_at <= ?`
+  ).run(now, now).changes;
 }
 
 export function createPendingOrder(
@@ -93,10 +122,11 @@ export function createPendingOrder(
   preparePaymentDb(db);
 
   const now = Date.now();
+  const expiresAt = now + PAYMENT_ORDER_TTL_MS;
   db.prepare(
     `INSERT INTO orders (
-      id, user_id, package_id, amount_cents, points, provider, payment_method, status, created_at
-    ) VALUES (?, ?, ?, ?, ?, ?, ?, 'pending', ?)`
+      id, user_id, package_id, amount_cents, points, provider, payment_method, status, created_at, expires_at
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, 'pending', ?, ?)`
   ).run(
     input.id,
     input.userId,
@@ -105,7 +135,8 @@ export function createPendingOrder(
     input.points,
     input.provider,
     input.paymentMethod,
-    now
+    now,
+    expiresAt
   );
 
   return db.prepare("SELECT * FROM orders WHERE id = ?").get(input.id) as OrderRow;
@@ -129,7 +160,7 @@ export function applyPaidOrder(
     }
 
     const changed = db.prepare(
-      "UPDATE orders SET status = 'paid', provider_trade_no = ?, notify_payload = ?, paid_at = ? WHERE id = ? AND status IN ('pending', 'paying')"
+      "UPDATE orders SET status = 'paid', provider_trade_no = ?, notify_payload = ?, paid_at = ? WHERE id = ? AND status IN ('pending', 'paying', 'closed')"
     ).run(input.providerTradeNo, input.notifyPayload, input.paidAt, input.orderId).changes;
 
     if (!changed) {

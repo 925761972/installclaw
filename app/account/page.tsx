@@ -30,6 +30,7 @@ type Order = {
   created_at: number;
   paid_at: number | null;
   closed_at: number | null;
+  expires_at: number | null;
 };
 type OrderFilter = "all" | "open" | "paid" | "failed";
 
@@ -188,7 +189,12 @@ export default function AccountPage() {
             {transactions.length === 0 ? (
               <div className="empty-jobs" style={{padding:"40px 20px", marginTop:"20px"}}><UserCircle size={34} /><h3>暂无记录</h3><p>你的积分变动会显示在这里</p></div>
             ) : (
-              <div className="jobs-table" style={{marginTop:"16px"}}>
+              <div
+                className={`jobs-table account-record-scroll account-points-scroll${transactions.length > 4 ? " is-scrollable" : ""}`}
+                style={{marginTop:"16px"}}
+                tabIndex={transactions.length > 4 ? 0 : undefined}
+                aria-label={transactions.length > 4 ? "积分变动记录，可上下滚动查看更多" : "积分变动记录"}
+              >
                 {transactions.map((tx) => (
                   <div key={tx.id} className="job-row">
                     <div className={`job-status-icon ${pointsColor(tx.type)}`} style={{background: tx.points > 0 ? "#e6f3d4" : "#fff0ec", color: tx.points > 0 ? "#557c1e" : "#ad3c27"}}>
@@ -208,6 +214,7 @@ export default function AccountPage() {
                 ))}
               </div>
             )}
+            {transactions.length > 4 ? <p className="account-scroll-hint">上下滚动查看更多积分记录</p> : null}
           </div>
 
           <div className="studio-card recharge-records-card" id="recharge-orders" style={{marginTop: "20px"}}>
@@ -243,7 +250,12 @@ export default function AccountPage() {
             ) : filteredOrders.length === 0 ? (
               <div className="empty-jobs" style={{padding:"40px 20px", marginTop:"20px"}}><Receipt size={34} /><h3>当前分类暂无订单</h3><p>可切换上方状态查看其他充值记录</p></div>
             ) : (
-              <div className="recharge-table">
+              <div
+                key={orderFilter}
+                className={`recharge-table account-record-scroll recharge-orders-scroll${filteredOrders.length > 6 ? " is-scrollable" : ""}`}
+                tabIndex={filteredOrders.length > 6 ? 0 : undefined}
+                aria-label={filteredOrders.length > 6 ? "充值记录，可上下滚动查看更多" : "充值记录"}
+              >
                 <div className="recharge-table-head">
                   <span>订单信息</span><span>支付状态</span><span>充值内容</span><span>支付金额</span><span>完成时间</span>
                 </div>
@@ -271,6 +283,7 @@ export default function AccountPage() {
                 ))}
               </div>
             )}
+            {filteredOrders.length > 6 ? <p className="account-scroll-hint">上下滚动查看更多充值记录</p> : null}
           </div>
         </div>
       </section>
