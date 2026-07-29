@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useState, useRef } from "react";
+import { useEffect, useState, useRef } from "react";
 import { ArrowRight, Eye, EyeOff, LoaderCircle } from "lucide-react";
 
 export function AuthForm({ kind, initialInviteCode }: { kind: "login" | "register"; initialInviteCode?: string | null }) {
@@ -17,6 +17,15 @@ export function AuthForm({ kind, initialInviteCode }: { kind: "login" | "registe
   const [countdown, setCountdown] = useState(0);
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const isLogin = kind === "login";
+
+  useEffect(() => {
+    if (isLogin || !initialInviteCode) return;
+
+    const normalizedInviteCode = initialInviteCode.trim().toUpperCase();
+    if (!normalizedInviteCode) return;
+
+    setInviteCode((currentCode) => currentCode || normalizedInviteCode);
+  }, [initialInviteCode, isLogin]);
 
   async function sendCode() {
     if (!email || sendingCode || countdown > 0) return;
